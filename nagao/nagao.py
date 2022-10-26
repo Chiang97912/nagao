@@ -1,18 +1,23 @@
 # -*- coding:utf-8 -*-
+from . import utils
 from collections import defaultdict
 from math import sqrt
 from nltk.tokenize import word_tokenize
 from sqlite_utils import Database
 import ext_sort as es
 import gc
+import logging
 import math
 import os
 import re
 import sqlite_utils
 import sys
 import time
-from . import utils
 
+
+logging.getLogger('ext_sort').setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger('nagao')
 
 sqlite_utils.db.SQLITE_MAX_VARS = sys.maxsize
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +40,7 @@ class Nagao:
                  use_db=True,
                  use_disk=True,
                  clean=False,
+                 verbose=False,
                  db_filename='temp.db',
                  temp_filename='temp.txt',
                  sorted_temp_filename='sorted_temp.txt',
@@ -59,6 +65,7 @@ class Nagao:
             use_db {bool} -- Using database to cache word statistics (default: {True})
             use_disk {bool} -- Using disk to cache pointer table (default: {True})
             clean {bool} -- If clean equals True, temp file will be cleaned at the end of the program (default: {False})
+            verbose {bool} -- If use verbose equals True, logs will be displayed on the terminal (default: {False})
             db_filename {str} -- SQLite3 Database file (default: {'temp.db'})
             temp_filename {str} -- temp file name (default: {'temp.txt'})
             sorted_temp_filename {str} -- sorted temp file name (default: {'sorted_temp.txt'})
@@ -77,9 +84,13 @@ class Nagao:
         self.use_db = use_db
         self.use_disk = use_disk
         self.clean = clean
+        self.verbose = verbose
         self.db_filename = db_filename
         self.temp_filename = temp_filename
         self.sorted_temp_filename = sorted_temp_filename
+
+        if self.verbose is True:
+            logger.setLevel(logging.INFO)
 
         if punctuations is None:
             self.punct_set = set(w.rstrip() for w in open(os.path.join(base_dir, 'data/punct.txt'), 'r', encoding='utf-8'))
@@ -216,7 +227,7 @@ class Nagao:
                             if len(temp) % batch_size == 0:
                                 ts = time.time()
                                 self.table.upsert_all(temp, pk='word', batch_size=int(batch_size))
-                                # print('insert spend:', time.time() - ts)
+                                logger.debug('insert spend: %s' % (time.time() - ts))
                                 temp.clear()
                     count = 1
                     if len(line) == i:
@@ -424,29 +435,29 @@ class Nagao:
             if min_pmi < self.min_pmi or word_threshold < self.threshold:
                 continue
             yield word, word_dict[self.key2idx['count']], word_dict[self.key2idx['lcount']], word_dict[self.key2idx['rcount']], word_dict[self.key2idx['lentropy']], word_dict[self.key2idx['rentropy']], min_pmi, word_eta_mean, word_threshold
-        print('spend:', time.time() - ts)
+        logger.debug('spend: %s' % (time.time() - ts))
 
     def process(self, filename):
-        print('First stage(1.1): making ptable and ltable')
+        logger.info('First stage(1.1): making ptable and ltable')
         ptable = self.make_ptable(filename, reverse=False, use_disk=self.use_disk)
         ltable = self.make_ltable(ptable, use_disk=self.use_disk)
-        print('Second stage(2.1): counting word frequency')
+        logger.info('Second stage(2.1): counting word frequency')
         ts = time.time()
         self.count_word_freq(ptable, ltable, 1, self.max_ngram, reverse=False, use_disk=self.use_disk, use_db=self.use_db)
-        print('spend:', time.time() - ts)
+        logger.debug('spend: %s' % (time.time() - ts))
         del ptable, ltable
         gc.collect()
 
-        print('First stage(1.2): making reversed ptable and ltable')
+        logger.info('First stage(1.2): making reversed ptable and ltable')
         ptable = self.make_ptable(filename, reverse=True, use_disk=self.use_disk)
         ltable = self.make_ltable(ptable, use_disk=self.use_disk)
-        print('Second stage(2.2): counting reversed word frequency')
+        logger.info('Second stage(2.2): counting reversed word frequency')
         ts = time.time()
         self.count_word_freq(ptable, ltable, 1, self.max_ngram, reverse=True, use_disk=self.use_disk, use_db=self.use_db)
-        print('spend:', time.time() - ts)
+        logger.debug('spend: %s' % (time.time() - ts))
         del ptable, ltable
         gc.collect()
-        print('Third stage(3.): writing result')
+        logger.info('Third stage(3.): writing result')
 
     def save(self, filename='vocab.tsv', sep='\t', header=True):
         with open(filename, 'w', encoding='utf-8') as f:

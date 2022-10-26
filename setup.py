@@ -8,7 +8,7 @@ with open("README.md", "r") as fd:
 
 setuptools.setup(
     name="nagao",
-    version="0.1.0",
+    version="0.1.1",
     description="Counting word frequency based on Nagao algorithm",
     long_description=long_description,
     long_description_content_type="text/markdown",

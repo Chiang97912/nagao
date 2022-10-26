@@ -32,7 +32,8 @@ You can use Nagao in Python file:
 ```python
 from nagao import Nagao
 
-nagao = Nagao(lang='en', min_ngram=2, max_ngram=6, min_freq=5, min_lrc=2, min_lre=0.5, min_pmi=0, min_eta=0, threshold=0, use_disk=True, use_db=True, lower=True, clean=True)
+nagao = Nagao(lang='en', min_ngram=2, max_ngram=6, min_freq=5, min_lrc=2, min_lre=0.5, min_pmi=0, min_eta=0, threshold=0,\
+              use_disk=True, use_db=True, lower=True, clean=True, verbose=True)
 ts = time.time()
 nagao.process('path/to/corpus/file')
 nagao.save('path/to/output/file')
@@ -43,7 +44,7 @@ print('total spend:', time.time() - ts)
 From the command line, you can run:
 
 ```shell
-nagao -c "path/to/corpus/file" -o "path/to/output/file" -l zh --clean
+nagao -c "path/to/corpus/file" -o "path/to/output/file" -l zh --clean --verbose
 ```
 
 You can use `nagao --help` to find the usage of nagao cli:
@@ -68,6 +69,8 @@ Options:
   --lower                     If use lower option, keep lowered dictionary.
   --clean                     If use clean option, the cache file will be
                               cleaned at the end of the program.
+  --verbose                   If use verbose option, logs will be displayed on
+                              the terminal.
 
   --help                      Show this message and exit.
 ```

@@ -18,8 +18,9 @@ from .nagao import Nagao
 @click.option('--punctuations', default=None, help='Punctuation file path.')
 @click.option('--lower', is_flag=True, help='If use lower option, keep lowered dictionary.')
 @click.option('--clean', is_flag=True, help='If use clean option, the cache file will be cleaned at the end of the program.')
+@click.option('--verbose', is_flag=True, help='If use verbose option, logs will be displayed on the terminal.')
 def nagao(corpus, output, lang, min_ngram, max_ngram, min_freq, min_lrc,
-          min_lre, min_pmi, min_eta, threshold, stopwords, punctuations, lower, clean):
+          min_lre, min_pmi, min_eta, threshold, stopwords, punctuations, lower, clean, verbose):
 
     nagao = Nagao(lang=lang,
                   min_ngram=min_ngram,
@@ -33,7 +34,8 @@ def nagao(corpus, output, lang, min_ngram, max_ngram, min_freq, min_lrc,
                   stopwords=stopwords,
                   punctuations=punctuations,
                   lower=lower,
-                  clean=clean
+                  clean=clean,
+                  verbose=verbose
                   )
     nagao.process(corpus)
     nagao.save(output)
